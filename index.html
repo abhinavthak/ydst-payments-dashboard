@@ -36,23 +36,30 @@ a{color:inherit}
 
 /* Top bar + main nav */
 .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.top .bar{display:flex;align-items:center;gap:14px;height:56px}
+.top .bar{display:flex;align-items:center;gap:14px;height:56px;padding:0 20px}
+@media (max-width:640px){.top .bar{padding:0 16px}}
 .logo{font-weight:700;font-size:15px;line-height:1.05;color:var(--brand)}
 .logo i{color:var(--red);font-style:normal}
 .app{font-size:13px;color:var(--muted)}
 .app b{color:var(--ink);font-weight:600}
 .top .site{margin-left:auto;font-size:13px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .top .site:hover{color:var(--ink)}
-.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
-.nav::-webkit-scrollbar{display:none}
-.nav a{display:flex;align-items:center;gap:9px;padding:10px 14px 12px;text-decoration:none;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
-.nav a:hover{color:var(--ink)}
-.nav a.on{color:var(--ink);border-bottom-color:var(--lane,var(--ink))}
-.nav .ico{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--tile);color:var(--ink-2)}
-.nav a.on .ico{background:var(--lane-bg,var(--tile));color:var(--lane,var(--ink))}
-.nav .ico svg{width:15px;height:15px}
-.nav b{display:block;font-weight:600;font-size:14px;line-height:1.2}
-.nav small{display:block;font-size:11px;color:var(--faint);line-height:1.2}
+
+/* App shell: left sidebar + content */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - 57px)}
+.side{background:var(--card);border-right:1px solid var(--line);position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;padding:18px 12px}
+.side-h{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:0 10px 8px}
+.main{min-width:0;padding:0 28px;max-width:1240px;width:100%}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px;border-radius:10px;text-decoration:none;color:var(--muted);position:relative}
+.nav a:hover{background:var(--hover);color:var(--ink)}
+.nav a.on{background:var(--lane-bg,var(--tile));color:var(--ink)}
+.nav a.on::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--lane,var(--ink))}
+.nav .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--tile);color:var(--ink-2);flex:none}
+.nav a.on .ico{background:var(--card);color:var(--lane,var(--ink))}
+.nav .ico svg{width:16px;height:16px}
+.nav b{display:block;font-weight:600;font-size:14px;line-height:1.25}
+.nav small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
 [data-lane="fee"]{--lane:var(--fee);--lane-bg:var(--fee-bg)}
 [data-lane="test"]{--lane:var(--test);--lane-bg:var(--test-bg)}
 
@@ -275,6 +282,18 @@ a{color:inherit}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .foot{font-size:12px;color:var(--muted);padding:22px 0 40px;text-align:center}
 
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .side{position:sticky;top:57px;height:auto;z-index:15;border-right:0;border-bottom:1px solid var(--line);padding:8px 12px}
+  .side-h{display:none}
+  .nav{flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{white-space:nowrap;padding:8px 10px}
+  .nav a.on::before{display:none}
+  .nav small{display:none}
+  .nav .ico{width:26px;height:26px}
+  .main{padding:0 16px}
+}
 @media (max-width:1000px){
   .kpis.five{grid-template-columns:repeat(3,1fr)}
   .fu-grid{grid-template-columns:repeat(2,1fr)}
@@ -295,8 +314,6 @@ a{color:inherit}
   .vhead .acts .btn{flex:1;justify-content:center}
   .kpi b{font-size:20px}
   .fu-grid{grid-template-columns:1fr}
-  .nav small{display:none}
-  .nav a{padding:10px 10px 12px;gap:7px}
   .filters .f:not(.search){flex:1 1 calc(50% - 5px)}
   .filters .f input,.filters .f select{width:100%}
   .filters .apply{flex:1 1 100%}
@@ -333,21 +350,24 @@ a{color:inherit}
 <body>
 
 <header class="top">
-  <div class="wrap">
-    <div class="bar">
-      <div class="logo">Your<i>.</i><br>Degree</div>
-      <div class="app">Admin <span aria-hidden="true">/</span> <b>YDST 2026</b></div>
-      <a class="site" href="https://abhinavthak.github.io/ydst-scholarship-prototype/" target="_blank" rel="noopener">View YDST page ↗</a>
-    </div>
-    <nav class="nav" aria-label="Dashboard sections">
-      <a href="#overview" data-view="overview"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>Overview</b><small>Whole learner journey</small></span></a>
-      <a href="#payments" data-view="payments" data-lane="fee"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 9h12M13 20 6 13h3a4 4 0 0 0 0-9"/></svg></span><span><b>Registration fees</b><small>₹100 one-time payment</small></span></a>
-      <a href="#results" data-view="results" data-lane="test"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"/><path d="M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><path d="m9 14 2 2 4-4"/></svg></span><span><b>Test results</b><small>Scores out of 60, monthly</small></span></a>
-    </nav>
+  <div class="bar">
+    <div class="logo">Your<i>.</i><br>Degree</div>
+    <div class="app">Admin <span aria-hidden="true">/</span> <b>YDST 2026</b></div>
+    <a class="site" href="https://abhinavthak.github.io/ydst-scholarship-prototype/" target="_blank" rel="noopener">View YDST page ↗</a>
   </div>
 </header>
 
-<main class="wrap">
+<div class="shell">
+<aside class="side">
+  <p class="side-h">Dashboard</p>
+  <nav class="nav" aria-label="Dashboard sections">
+    <a href="#overview" data-view="overview"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>Overview</b><small>Whole learner journey</small></span></a>
+    <a href="#payments" data-view="payments" data-lane="fee"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 9h12M13 20 6 13h3a4 4 0 0 0 0-9"/></svg></span><span><b>Registration fees</b><small>₹100 one-time payment</small></span></a>
+    <a href="#results" data-view="results" data-lane="test"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"/><path d="M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><path d="m9 14 2 2 4-4"/></svg></span><span><b>Test results</b><small>Scores out of 60, monthly</small></span></a>
+  </nav>
+</aside>
+
+<main class="main">
 
 <!-- ============ OVERVIEW ============ -->
 <section class="view" id="v-overview" aria-labelledby="h-overview">
@@ -442,6 +462,7 @@ a{color:inherit}
 
 <p class="foot">Prototype · sample data only (fictional learners). Fee: ₹100 one-time lifetime registration. Test: 60 marks, one attempt per calendar month.</p>
 </main>
+</div>
 
 <!-- Learner profile -->
 <div class="scrim" id="scrim" hidden></div>
