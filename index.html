@@ -4,397 +4,848 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Registration Payments · YDST Admin</title>
+<title>YDST Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --red:#c13515; --red-dark:#a92c10;
-  --ink:#1a1d21; --ink-2:#3d4148; --muted:#5f636b; --line:#e5e5e5; --line-2:#efefef;
-  --bg:#f6f6f4; --card:#fff; --tile:#f2f2f2;
+  /* Layout: three top-level views (Overview / Registration fees / Test results) + one shared learner drawer */
+  --red:#c13515; --brand:#581000;
+  --ink:#1a1d21; --ink-2:#3d4148; --muted:#5f636b; --faint:#8a8d93;
+  --line:#e5e4e1; --line-2:#efeeec; --line-hover:#cfcdc9;
+  --bg:#f6f6f4; --card:#ffffff; --tile:#f1f0ee; --head:#fafaf9; --hover:#fbfbfa;
+  /* Lane colours: one per data domain, used only on icons, tab underline and section labels */
+  --fee:#0f766e; --fee-bg:#e2f3f1;
+  --test:#4338ca; --test-bg:#e8e8fb;
+  /* Status (semantic) */
   --green:#0b7a4b; --green-bg:#e3f4ea; --amber:#9a5b00; --amber-bg:#fdf0d8;
-  --grey-bg:#eeeeee; --blue:#1d4ed8; --blue-bg:#e5ecfd; --violet:#6b3fa0; --violet-bg:#f0e8fa;
+  --err:#b42318; --err-bg:#fde7e3; --grey-bg:#eeedeb; --violet:#6b3fa0; --violet-bg:#f0e8fa;
+  /* Sequential ramp for scholarship tiers (ordered: none -> 15 -> 30 -> 50) */
+  --t0:#d9d7d3; --t15:#f2b8a5; --t30:#e0704f; --t50:#a8300f;
+  color-scheme:light;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Google Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.45;font-size:14px}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
 a{color:inherit}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+.num,.tn{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
-/* Top bar */
-.top{background:#fff;border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:14px;height:58px}
-.logo{font-weight:700;font-size:15px;line-height:1.05;color:#581000}
+/* Top bar + main nav */
+.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top .bar{display:flex;align-items:center;gap:14px;height:56px}
+.logo{font-weight:700;font-size:15px;line-height:1.05;color:var(--brand)}
 .logo i{color:var(--red);font-style:normal}
-.crumb{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
-.crumb b{color:var(--ink);font-weight:600}
-.top .site{margin-left:auto;font-size:13px;color:var(--muted);text-decoration:none}
+.app{font-size:13px;color:var(--muted)}
+.app b{color:var(--ink);font-weight:600}
+.top .site{margin-left:auto;font-size:13px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .top .site:hover{color:var(--ink)}
+.nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
+.nav::-webkit-scrollbar{display:none}
+.nav a{display:flex;align-items:center;gap:9px;padding:10px 14px 12px;text-decoration:none;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.nav a:hover{color:var(--ink)}
+.nav a.on{color:var(--ink);border-bottom-color:var(--lane,var(--ink))}
+.nav .ico{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--tile);color:var(--ink-2)}
+.nav a.on .ico{background:var(--lane-bg,var(--tile));color:var(--lane,var(--ink))}
+.nav .ico svg{width:15px;height:15px}
+.nav b{display:block;font-weight:600;font-size:14px;line-height:1.2}
+.nav small{display:block;font-size:11px;color:var(--faint);line-height:1.2}
+[data-lane="fee"]{--lane:var(--fee);--lane-bg:var(--fee-bg)}
+[data-lane="test"]{--lane:var(--test);--lane-bg:var(--test-bg)}
 
-/* Header */
-.head{display:flex;align-items:flex-start;gap:16px;padding:28px 0 18px;flex-wrap:wrap}
-.head h1{font-size:26px;font-weight:600;letter-spacing:-.02em}
-.head p{color:var(--muted);margin-top:4px;max-width:620px}
-.head .acts{margin-left:auto;display:flex;gap:8px}
-.btn{height:36px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;font-weight:500;font-size:13px;border:1px solid var(--line);background:#fff;white-space:nowrap}
-.btn:hover{border-color:#cfcfcf}
+/* View header */
+.view[hidden]{display:none}
+.vhead{display:flex;align-items:flex-start;gap:16px;padding:26px 0 16px;flex-wrap:wrap}
+.vhead h1{font-size:24px;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.vhead p{color:var(--muted);margin-top:4px;max-width:640px}
+.lane-tag{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;font-size:12px;font-weight:600;background:var(--lane-bg,var(--tile));color:var(--lane,var(--ink-2));letter-spacing:.01em}
+.lane-tag svg{width:13px;height:13px}
+.vhead .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:36px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;font-weight:500;font-size:13px;border:1px solid var(--line);background:var(--card);white-space:nowrap}
+.btn:hover{border-color:var(--line-hover)}
 .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
-.btn.primary:hover{background:#000}
+.btn.primary:hover{opacity:.88}
 .btn svg{width:15px;height:15px}
 .btn.spin svg{animation:spin .8s linear infinite}
+.btn:disabled{opacity:.45;cursor:default}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* KPIs */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.kpi span{font-size:12px;color:var(--muted)}
+.kpis.five{grid-template-columns:repeat(5,1fr)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.kpi span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.kpi span i{width:8px;height:8px;border-radius:2px;background:var(--lane,var(--ink-2))}
 .kpi b{display:block;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
 .kpi small{font-size:12px;color:var(--muted)}
 
-/* Filters */
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:16px}
-.filters{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line-2);align-items:flex-end}
-.f{display:flex;flex-direction:column;gap:4px}
-.f label{font-size:11px;color:var(--muted);font-weight:500}
-.f input,.f select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fff;min-width:0}
-.f input:focus,.f select:focus{outline:2px solid #1a1d2122;border-color:#bbb}
-.f.search{flex:1 1 220px}
-.f.search input{width:100%;padding-left:32px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f636b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 10px center/15px no-repeat}
-.note{font-size:12px;color:var(--muted);padding:8px 16px 0}
+/* Cards / panels */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:16px;min-width:0}
+.panel-h{display:flex;align-items:baseline;gap:10px;padding:16px 18px 4px;flex-wrap:wrap}
+.panel-h h2{font-size:15px;font-weight:600}
+.panel-h p{font-size:12px;color:var(--muted)}
+.panel-h .r{margin-left:auto;font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+.grid2 > .card{margin-top:16px}
 
+/* Funnel */
+.funnel{padding:14px 18px 18px;display:grid;gap:10px}
+.fstep{display:grid;grid-template-columns:170px 1fr 92px;align-items:center;gap:12px}
+.fstep .lbl{font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:7px}
+.fstep .lbl i{width:8px;height:8px;border-radius:2px;flex:none}
+.fstep .track{height:26px;background:var(--tile);border-radius:6px;position:relative;overflow:hidden}
+.fstep .fill{position:absolute;inset:0 auto 0 0;border-radius:0 4px 4px 0;background:var(--ink-2)}
+.fstep .v{text-align:right;font-variant-numeric:tabular-nums}
+.fstep .v b{font-weight:600}
+.fstep .v small{display:block;font-size:11px;color:var(--muted)}
+.fnote{font-size:12px;color:var(--muted);padding:0 18px 16px}
+
+/* Histogram */
+.hist{padding:10px 18px 6px}
+.hist svg{display:block;width:100%;height:auto;overflow:visible}
+.hist .ax{font-size:10px;fill:var(--muted)}
+.hist .cut{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3}
+.hist .cutl{font-size:10px;fill:var(--ink-2);font-weight:600}
+.hist rect.bar{cursor:default}
+.hist rect.hit{fill:transparent}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 18px 16px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px}
+
+/* Stacked mix bar */
+.mix{padding:14px 18px 6px}
+.mix .bar{display:flex;height:26px;border-radius:6px;overflow:hidden;gap:2px;background:var(--card)}
+.mix .bar span{display:block;height:100%}
+.mix-list{display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;padding:12px 18px 18px;font-size:13px}
+.mix-list .k{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.mix-list .k i{width:10px;height:10px;border-radius:2px}
+.mix-list .n{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.mix-list .p{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;min-width:38px}
+
+/* Follow-ups */
+.fu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.fu{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px;min-width:0;display:flex;flex-direction:column}
+.fu h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.fu h3 .lane-tag{height:20px;padding:0 6px;font-size:11px}
+.fu .cnt{font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.fu .why{font-size:12px;color:var(--muted);margin-bottom:8px}
+.fu ul{list-style:none;border-top:1px solid var(--line-2)}
+.fu li button{width:100%;display:flex;justify-content:space-between;gap:8px;text-align:left;padding:8px 2px;border-bottom:1px solid var(--line-2);font-size:13px}
+.fu li:last-child button{border-bottom:0}
+.fu li button:hover{background:var(--hover)}
+.fu li b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fu li span{color:var(--muted);font-size:12px;white-space:nowrap}
+.fu .more{font-size:12px;color:var(--muted);padding:6px 2px}
+.fu .none{font-size:12px;color:var(--muted);padding:10px 2px}
+
+/* Filters / tabs */
+.filters{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line-2);align-items:flex-end}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f label{font-size:11px;color:var(--muted);font-weight:500}
+.f input,.f select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--card);min-width:0}
+.f input:focus,.f select:focus{outline:2px solid var(--line-hover);border-color:var(--line-hover)}
+.f.search{flex:1 1 220px}
+.f.search input{width:100%;padding-left:32px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f636b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 10px center/15px no-repeat}
+.note{font-size:12px;color:var(--muted);padding:8px 16px 0}
 .tabs{display:flex;gap:6px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:6px}
 .tab em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .tab.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .tab.on em{color:#cfd2d6}
-
 .sumbar{display:flex;align-items:center;gap:12px;padding:4px 16px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .sumbar b{color:var(--ink);font-weight:600}
 .sumbar .link{margin-left:auto;font-weight:500;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 
-/* Table */
+/* Tables */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 16px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);background:#fafafa;white-space:nowrap}
-.tbl td{padding:12px 16px;border-bottom:1px solid var(--line-2);vertical-align:middle}
-.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 16px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);background:var(--head);white-space:nowrap}
+.tbl > tbody > tr > td{padding:12px 16px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.tbl .r{text-align:right}
 .row{cursor:pointer}
-.row:hover td{background:#fbfbfa}
-.row.open td{background:#fbfbfa;border-bottom-color:transparent}
+.row:hover > td{background:var(--hover)}
+.row.open > td{background:var(--hover);border-bottom-color:transparent}
 .who{display:flex;align-items:center;gap:11px;min-width:0}
-.av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--tile);color:var(--ink-2)}
+.av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--ink-2)}
 .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chev{width:16px;height:16px;color:var(--muted);transition:transform .15s;flex:none}
 .row.open .chev{transform:rotate(90deg)}
-.prog{font-size:13px}
-.prog small{display:block;color:var(--muted);font-size:12px}
+.sub2{font-size:13px}
+.sub2 small{display:block;color:var(--muted);font-size:12px}
 .date{white-space:nowrap;font-size:13px;color:var(--ink-2)}
+.mob{display:none}
+.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:13px;color:var(--muted);gap:10px}
+.pager .btns{display:flex;gap:6px}
+.pager .btn{height:32px}
+.empty{padding:48px 16px;text-align:center;color:var(--muted)}
 
+/* Pills */
 .pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .s-paid{background:var(--green-bg);color:var(--green)}
-.s-progress{background:var(--blue-bg);color:var(--blue)}
-.s-failed{background:#fde7e3;color:#b42318}
+.s-progress{background:var(--amber-bg);color:var(--amber)}
+.s-failed{background:var(--err-bg);color:var(--err)}
 .s-unpaid{background:var(--grey-bg);color:var(--ink-2)}
 .s-refunded{background:var(--violet-bg);color:var(--violet)}
+.tier{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid var(--line)}
+.tier i{width:9px;height:9px;border-radius:2px}
+.tier.void{color:var(--err);border-color:var(--err-bg);background:var(--err-bg)}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-2)}
+.cstat{font-size:11px;color:var(--muted);white-space:nowrap}
+.cstat.active{color:var(--green)} .cstat.enrolled{color:var(--test)} .cstat.expired{color:var(--faint)}
 
-/* Detail */
-.detail>td{padding:0 16px 16px;background:#fbfbfa}
-.dbox{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+/* Score bar */
+.score{display:flex;align-items:center;gap:10px}
+.score b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;min-width:48px;white-space:nowrap}
+.score b small{font-size:11px;color:var(--muted);font-weight:500}
+.sbar{position:relative;width:90px;height:8px;border-radius:4px;background:var(--tile);flex:none}
+.sbar span{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.sbar i{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--card)}
+.secs{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.secs b{color:var(--ink-2);font-weight:600}
+
+/* Payment detail rows */
+.detail > td{padding:0 16px 16px;background:var(--hover)}
+.dbox{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .dhead{display:flex;flex-wrap:wrap;gap:8px 24px;padding:14px 16px;border-bottom:1px solid var(--line-2);align-items:center}
 .dhead .item span{display:block;font-size:11px;color:var(--muted)}
 .dhead .item b{font-weight:600;font-size:13px}
-.dhead .pill{margin-left:auto}
+.dhead .btn{margin-left:auto;height:32px}
 .ptbl{width:100%;border-collapse:collapse;font-size:13px}
-.ptbl th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;padding:9px 16px;border-bottom:1px solid var(--line-2);white-space:nowrap}
-.ptbl td{padding:10px 16px;border-bottom:1px solid var(--line-2);vertical-align:top}
+.ptbl th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;padding:9px 16px;border-bottom:1px solid var(--line-2);white-space:nowrap;background:var(--card)}
+.ptbl td{padding:10px 16px;border-bottom:1px solid var(--line-2);vertical-align:top;background:var(--card)}
 .ptbl tr:last-child td{border-bottom:0}
-.ptbl .res{font-weight:600}
-.r-paid{color:var(--green)} .r-failed{color:#b42318} .r-opened{color:var(--ink-2)} .r-refunded{color:var(--violet)}
-.txn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
-.copy{color:var(--muted);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px}
+.res{font-weight:600}
+.r-paid{color:var(--green)} .r-failed{color:var(--err)} .r-opened{color:var(--ink-2)} .r-refunded{color:var(--violet)}
+.txn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px;word-break:break-all}
+.copy{color:var(--muted);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;flex:none}
 .copy:hover{background:var(--tile);color:var(--ink)}
 .copy svg{width:13px;height:13px}
 .empty-p{padding:18px 16px;color:var(--muted);font-size:13px}
 .gw{color:var(--muted)}
 
-.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:13px;color:var(--muted)}
-.pager .btns{display:flex;gap:6px}
-.pager .btn{height:32px}
-.pager .btn:disabled{opacity:.4;cursor:default}
-.empty{padding:48px 16px;text-align:center;color:var(--muted)}
+/* Drawer (learner profile) */
+.scrim{position:fixed;inset:0;background:rgba(20,20,18,.36);z-index:40;opacity:0;transition:opacity .18s}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--bg);z-index:41;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.12);transform:translateX(24px);opacity:0;transition:transform .18s,opacity .18s}
+.drawer-open .scrim{opacity:1}
+.drawer-open .drawer{transform:none;opacity:1}
+.scrim[hidden],.drawer[hidden]{display:none}
+.dr-top{background:var(--card);border-bottom:1px solid var(--line);padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.dr-top .av{width:44px;height:44px;font-size:15px}
+.dr-top h2{font-size:18px;font-weight:600;line-height:1.25}
+.dr-top p{font-size:12px;color:var(--muted);word-break:break-word}
+.dr-x{margin-left:auto;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--muted);flex:none}
+.dr-x:hover{background:var(--tile);color:var(--ink)}
+.dr-x svg{width:18px;height:18px}
+.dr-body{overflow-y:auto;padding:16px 18px 32px;display:grid;gap:16px;align-content:start}
+.journey{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.jstep{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;font-size:11px;color:var(--muted);position:relative}
+.jstep .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--tile);color:var(--faint);font-size:11px;font-weight:600;position:relative;z-index:1}
+.jstep .dot svg{width:12px;height:12px}
+.jstep.done .dot{background:var(--ink);color:#fff}
+.jstep.warn .dot{background:var(--amber-bg);color:var(--amber)}
+.jstep.done{color:var(--ink-2)}
+.jstep::after{content:"";position:absolute;top:11px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:var(--line)}
+.jstep:last-child::after{display:none}
+.jstep.done::after{background:var(--ink)}
+.jstep b{font-weight:600;color:inherit;display:block}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sec-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
+.sec-h h3{font-size:14px;font-weight:600}
+.sec-h .pill,.sec-h .tier{margin-left:auto}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px;border-bottom:1px solid var(--line-2)}
+.facts span{display:block;font-size:11px;color:var(--muted)}
+.facts b{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.alist{list-style:none}
+.alist li{padding:10px 14px;border-bottom:1px solid var(--line-2);display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px}
+.alist li:last-child{border-bottom:0}
+.alist .m{color:var(--muted);font-size:12px}
+.alist .rt{text-align:right}
 
-.foot{font-size:12px;color:var(--muted);padding:18px 0 40px;text-align:center}
+/* Tooltip */
+.tip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;max-width:240px;opacity:0;transition:opacity .1s;line-height:1.35}
+.tip.show{opacity:1}
+.tip b{font-weight:600}
 
-.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:70}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{font-size:12px;color:var(--muted);padding:22px 0 40px;text-align:center}
 
-.mob{display:none}
-.mob .pill{display:inline-flex}
-
-@media (max-width:900px){
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .tbl .c-prog,.tbl .c-att{display:none}
+@media (max-width:1000px){
+  .kpis.five{grid-template-columns:repeat(3,1fr)}
+  .fu-grid{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr;gap:0}
+  .tbl .c-hide-md{display:none}
+}
+@media (max-width:760px){
+  .kpis,.kpis.five{grid-template-columns:repeat(2,1fr)}
+  .app{display:none}
+  .fstep{grid-template-columns:110px 1fr 70px;gap:8px}
+  .fstep .lbl{font-size:12px}
+  .kpis.five .kpi:last-child{grid-column:span 2}
+  .hist{overflow-x:auto}
+  .hist svg{min-width:600px}
 }
 @media (max-width:640px){
-  .head .acts{margin-left:0;width:100%}
-  .head .acts .btn{flex:1;justify-content:center}
+  .vhead .acts{margin-left:0;width:100%}
+  .vhead .acts .btn{flex:1;justify-content:center}
   .kpi b{font-size:20px}
+  .fu-grid{grid-template-columns:1fr}
+  .nav small{display:none}
+  .nav a{padding:10px 10px 12px;gap:7px}
   .filters .f:not(.search){flex:1 1 calc(50% - 5px)}
   .filters .f input,.filters .f select{width:100%}
   .filters .apply{flex:1 1 100%}
   .filters .apply .btn{width:100%;justify-content:center}
   .tbl thead{display:none}
-  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block}
-  .tbl td.c-prog,.tbl td.c-att{display:none}
-  .who>div{flex:1}
-  .tbl .c-date,.tbl .c-paid,.tbl .c-status{display:none}
-  .mob .pill{margin-top:6px}
-  .ptbl,.ptbl tbody{display:block}
-  .txn{word-break:break-all}
-  .crumb .adm{display:none}
-  .top .site{font-size:12px}
-  .tbl td{padding:12px}
+  .tbl,.tbl > tbody,.tbl > tbody > tr,.tbl > tbody > tr > td{display:block}
+  .tbl .c-hide-sm,.tbl .c-hide-md{display:none!important}
+  .tbl > tbody > tr > td{padding:12px}
+  .tbl > tbody > tr.row > td{border-bottom:0}
+  .tbl > tbody > tr.row{border-bottom:1px solid var(--line-2)}
+  .who>div{flex:1;min-width:0}
   .mob{display:block;font-size:12px;color:var(--muted);margin-top:2px}
-  .detail>td{padding:0 12px 12px}
+  .mob .pill,.mob .tier{margin-top:6px}
+  .mob .score{margin-top:6px}
+  .detail > td{padding:0 12px 12px}
+  .ptbl,.ptbl tbody{display:block}
   .ptbl thead{display:none}
-  .ptbl tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 14px;border-bottom:1px solid var(--line-2)}
+  .ptbl tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 14px;border-bottom:1px solid var(--line-2);background:var(--card)}
   .ptbl tr:last-child{border-bottom:0}
   .ptbl td{padding:0;border:0}
   .ptbl td[data-k]::before{content:attr(data-k) " · ";color:var(--muted)}
   .ptbl td.t-open{grid-column:1}
   .ptbl td.t-res{grid-column:2;grid-row:1;text-align:right}
-  .ptbl td.t-amt::before,.ptbl td.t-open::before,.ptbl td.t-res::before{content:none}
   .ptbl td.t-amt{grid-column:2;text-align:right}
   .ptbl td.t-gw,.ptbl td.t-set,.ptbl td.t-txn{grid-column:1/-1}
-  .dhead .pill{margin-left:0}
+  .dhead .btn{margin-left:0;width:100%;justify-content:center}
+  .facts{grid-template-columns:repeat(2,1fr)}
+  .journey{padding:10px 6px}
+  .jstep{font-size:10px}
 }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="logo">Your<i>.</i><br>Degree</div>
-    <div class="crumb"><span class="adm">Admin</span> <span class="adm">/</span> <b>YDST registration payments</b></div>
-    <a class="site" href="https://abhinavthak.github.io/ydst-scholarship-prototype/" target="_blank" rel="noopener">View YDST page ↗</a>
+    <div class="bar">
+      <div class="logo">Your<i>.</i><br>Degree</div>
+      <div class="app">Admin <span aria-hidden="true">/</span> <b>YDST 2026</b></div>
+      <a class="site" href="https://abhinavthak.github.io/ydst-scholarship-prototype/" target="_blank" rel="noopener">View YDST page ↗</a>
+    </div>
+    <nav class="nav" aria-label="Dashboard sections">
+      <a href="#overview" data-view="overview"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>Overview</b><small>Whole learner journey</small></span></a>
+      <a href="#payments" data-view="payments" data-lane="fee"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 9h12M13 20 6 13h3a4 4 0 0 0 0-9"/></svg></span><span><b>Registration fees</b><small>₹100 one-time payment</small></span></a>
+      <a href="#results" data-view="results" data-lane="test"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"/><path d="M8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/><path d="m9 14 2 2 4-4"/></svg></span><span><b>Test results</b><small>Scores out of 60, monthly</small></span></a>
+    </nav>
   </div>
 </header>
 
 <main class="wrap">
-  <div class="head">
+
+<!-- ============ OVERVIEW ============ -->
+<section class="view" id="v-overview" aria-labelledby="h-overview">
+  <div class="vhead">
     <div>
-      <h1>Registration Payments</h1>
-      <p>Every learner who started YDST registration. Open a learner to see each payment attempt for the ₹100 one-time registration fee.</p>
+      <h1 id="h-overview">Overview</h1>
+      <p>How learners move from registration to a scholarship. Fee figures are in <span class="lane-tag" data-lane="fee">teal</span> and test figures in <span class="lane-tag" data-lane="test">indigo</span> across the dashboard.</p>
     </div>
-    <div class="acts">
-      <button class="btn" id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Refresh payment status</button>
-      <button class="btn primary" id="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Export CSV</button>
+  </div>
+  <div class="kpis five" id="ovKpis"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="panel-h"><h2>Registration to enrolment</h2><p>Learners at each step</p></div>
+      <div class="funnel" id="funnel"></div>
+      <p class="fnote">Each bar shows how many learners reached that step. The % under the count is of the step before.</p>
+    </div>
+    <div class="card">
+      <div class="panel-h"><h2>Best score per learner</h2><p>Decides the scholarship</p></div>
+      <div class="mix" id="mixBar"></div>
+      <div class="mix-list" id="mixList"></div>
     </div>
   </div>
 
-  <section class="kpis" aria-label="Summary">
-    <div class="kpi"><span>Collected</span><b id="kCollected">₹0</b><small id="kCollectedSub"></small></div>
-    <div class="kpi"><span>Registered (paid)</span><b id="kPaid">0</b><small id="kPaidSub"></small></div>
-    <div class="kpi"><span>Not paid yet</span><b id="kUnpaid">0</b><small id="kUnpaidSub"></small></div>
-    <div class="kpi"><span>Refunded</span><b id="kRefund">₹0</b><small id="kRefundSub"></small></div>
-  </section>
+  <div class="card">
+    <div class="panel-h"><h2>Score distribution</h2><p>All valid test attempts, out of 60</p><span class="r" id="histN"></span></div>
+    <div class="hist" id="hist"></div>
+    <div class="legend" id="histLegend"></div>
+  </div>
 
+  <div class="panel-h" style="padding:26px 0 0"><h2>Needs follow-up</h2><p>Learners a counsellor should contact. Click a name to open their profile.</p></div>
+  <div class="fu-grid" id="followups"></div>
+</section>
+
+<!-- ============ PAYMENTS ============ -->
+<section class="view" id="v-payments" data-lane="fee" aria-labelledby="h-payments" hidden>
+  <div class="vhead">
+    <div>
+      <h1 id="h-payments">Registration fees <span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 9h12M13 20 6 13h3a4 4 0 0 0 0-9"/></svg>₹100 · once per learner</span></h1>
+      <p>Every learner who started registration and each attempt to pay the one-time fee. Test scores are in <a href="#results">Test results</a>.</p>
+    </div>
+    <div class="acts">
+      <button class="btn" id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Refresh payment status</button>
+      <button class="btn primary" id="payExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Export CSV</button>
+    </div>
+  </div>
+  <div class="kpis" id="payKpis"></div>
   <section class="card">
-    <form class="filters" id="filters" onsubmit="return false">
-      <div class="f search"><label for="q">Search</label><input id="q" type="search" placeholder="Name, email, phone or transaction id"></div>
-      <div class="f"><label for="lvl">Program</label><select id="lvl"><option value="">All programs</option></select></div>
-      <div class="f"><label for="from">From</label><input id="from" type="date"></div>
-      <div class="f"><label for="to">To</label><input id="to" type="date"></div>
-      <div class="f apply"><label>&nbsp;</label><button class="btn primary" id="apply" type="submit">Apply</button></div>
+    <form class="filters" id="payFilters" onsubmit="return false">
+      <div class="f search"><label for="pq">Search</label><input id="pq" type="search" placeholder="Name, email, phone or transaction id"></div>
+      <div class="f"><label for="plvl">Program</label><select id="plvl"></select></div>
+      <div class="f"><label for="pfrom">From</label><input id="pfrom" type="date"></div>
+      <div class="f"><label for="pto">To</label><input id="pto" type="date"></div>
+      <div class="f apply"><label>&nbsp;</label><button class="btn primary" id="papply" type="submit">Apply</button></div>
     </form>
     <p class="note">Dates match a registration started, or a payment opened, on those days (IST).</p>
-    <div class="tabs" id="tabs" role="tablist"></div>
-    <div class="sumbar"><span id="summary"></span><button class="link" id="expandAll" type="button">Expand all</button></div>
+    <div class="tabs" id="payTabs" role="tablist" aria-label="Payment status"></div>
+    <div class="sumbar"><span id="paySummary"></span><button class="link" id="expandAll" type="button">Expand all</button></div>
     <table class="tbl">
-      <thead><tr><th>Learner</th><th class="c-prog">Program</th><th class="c-status">Status</th><th class="num c-att">Attempts</th><th class="num c-paid">Paid</th><th class="c-date">Last activity</th></tr></thead>
-      <tbody id="rows"></tbody>
+      <thead><tr><th>Learner</th><th class="c-hide-md">Program</th><th class="c-hide-sm">Fee status</th><th class="r c-hide-md">Attempts</th><th class="r c-hide-sm">Paid</th><th class="c-hide-sm">Last activity</th></tr></thead>
+      <tbody id="payRows"></tbody>
     </table>
-    <div class="pager"><span id="range"></span><div class="btns"><button class="btn" id="prev">Previous</button><button class="btn" id="next">Next</button></div></div>
+    <div class="pager"><span id="payRange"></span><div class="btns"><button class="btn" id="payPrev">Previous</button><button class="btn" id="payNext">Next</button></div></div>
   </section>
-  <p class="foot">Prototype · sample data only. Fee: ₹100 one-time lifetime registration · 1 test per month.</p>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="view" id="v-results" data-lane="test" aria-labelledby="h-results" hidden>
+  <div class="vhead">
+    <div>
+      <h1 id="h-results">Test results <span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>60 marks · 1 attempt a month</span></h1>
+      <p>One row per test attempt. Score 31+ for 15% off, 41+ for 30% off, 51+ for 50% off first-semester tuition. Fee payments are in <a href="#payments">Registration fees</a>.</p>
+    </div>
+    <div class="acts">
+      <button class="btn primary" id="resExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Export CSV</button>
+    </div>
+  </div>
+  <div class="kpis" id="resKpis"></div>
+  <section class="card">
+    <form class="filters" id="resFilters" onsubmit="return false">
+      <div class="f search"><label for="rq">Search</label><input id="rq" type="search" placeholder="Name, email, phone or scholarship code"></div>
+      <div class="f"><label for="rpaper">Paper</label><select id="rpaper"><option value="">Both papers</option><option value="PG">Master's · Advanced</option><option value="UG">Bachelor's · Foundation</option></select></div>
+      <div class="f"><label for="rmonth">Test month</label><select id="rmonth"></select></div>
+      <div class="f"><label for="rcode">Code status</label><select id="rcode"><option value="">Any</option><option value="active">Active</option><option value="enrolled">Used · enrolled</option><option value="expired">Expired</option></select></div>
+    </form>
+    <div class="tabs" id="resTabs" role="tablist" aria-label="Result"></div>
+    <div class="sumbar"><span id="resSummary"></span></div>
+    <table class="tbl">
+      <thead><tr><th>Learner</th><th class="c-hide-sm">Taken</th><th class="c-hide-sm">Score</th><th class="c-hide-md">Sections <span style="text-transform:none;letter-spacing:0;font-weight:500">(LR · QA · VA · AR)</span></th><th class="c-hide-sm">Result</th><th class="c-hide-md">Scholarship code</th></tr></thead>
+      <tbody id="resRows"></tbody>
+    </table>
+    <div class="pager"><span id="resRange"></span><div class="btns"><button class="btn" id="resPrev">Previous</button><button class="btn" id="resNext">Next</button></div></div>
+  </section>
+</section>
+
+<p class="foot">Prototype · sample data only (fictional learners). Fee: ₹100 one-time lifetime registration. Test: 60 marks, one attempt per calendar month.</p>
 </main>
 
+<!-- Learner profile -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drName" hidden>
+  <div class="dr-top" id="drTop"></div>
+  <div class="dr-body" id="drBody"></div>
+</aside>
+
+<div class="tip" id="tip" role="tooltip"></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-const $=s=>document.querySelector(s);
-const FEE=100, PAGE=20;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const FEE=100, PAGE=20, MIN=60e3, HOUR=36e5, DAY=864e5;
+const NOW=Date.parse('2026-11-15T18:00:00+05:30');
+const IST=5.5*HOUR;
 
-/* ---- Sample data (fictional learners) ---- */
-let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+/* ---------- Sample data (fictional) ---------- */
+let seed=15;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
 const pick=a=>a[Math.floor(rnd()*a.length)];
-const first=['Aarav','Diya','Kabir','Meera','Rohan','Isha','Arjun','Ananya','Vihaan','Saanvi','Aditya','Nisha','Karan','Pooja','Rahul','Sneha','Yash','Kavya','Nikhil','Tanvi','Siddharth','Ritika','Manav','Aisha','Dev','Priya','Harsh','Neha','Varun','Ira','Om','Zara'];
-const last=['Sharma','Verma','Iyer','Nair','Patel','Gupta','Reddy','Das','Joshi','Mehta','Kulkarni','Singh','Rao','Bose','Kapoor','Chauhan','Menon','Pillai','Saxena','Bhatt'];
+const gauss=()=>(rnd()+rnd()+rnd()+rnd()-2)*1.73;
+const first=['Aarav','Diya','Kabir','Meera','Rohan','Isha','Arjun','Ananya','Vihaan','Saanvi','Aditya','Nisha','Karan','Pooja','Rahul','Sneha','Yash','Kavya','Nikhil','Tanvi','Siddharth','Ritika','Manav','Aisha','Dev','Priya','Harsh','Neha','Varun','Ira','Om','Zara','Ishaan','Mira','Reyansh','Tara','Advait','Anika','Kunal','Riya'];
+const last=['Sharma','Verma','Iyer','Nair','Patel','Gupta','Reddy','Das','Joshi','Mehta','Kulkarni','Singh','Rao','Bose','Kapoor','Chauhan','Menon','Pillai','Saxena','Bhatt','Desai','Banerjee','Malhotra','Shetty'];
 const progs={PG:['MBA','MCA','MA','MCom','MSc'],UG:['BBA','BCA','BA','BCom','BSc']};
-const uuid=()=>'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.floor(rnd()*16);return(c==='x'?r:(r&3|8)).toString(16)});
-const NOW=new Date('2026-11-15T18:00:00+05:30').getTime(), MIN=60e3, DAY=864e5;
+const SECS=[['LR','Logical Reasoning',20],['QA','Quantitative Aptitude',15],['VA','Verbal Ability & RC',15],['AR','Abstract Reasoning',10]];
+const hex=n=>Array.from({length:n},()=>Math.floor(rnd()*16).toString(16)).join('');
+const uuid=()=>`${hex(8)}-${hex(4)}-4${hex(3)}-${(8+Math.floor(rnd()*4)).toString(16)}${hex(3)}-${hex(12)}`;
+const ALNUM='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const istDate=ts=>{const d=new Date(ts+IST);return{y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}};
+const monthStart=(y,m)=>Date.UTC(y,m,1)-IST;
+const monthKey=ts=>{const {y,m}=istDate(ts);return y+'-'+String(m+1).padStart(2,'0')};
+const tierOf=s=>s>=51?50:s>=41?30:s>=31?15:0;
 
-const learners=[];
-const used=new Set();
-for(let i=0;i<34;i++){
+const learners=[], used=new Set();
+for(let i=0;i<64;i++){
   let f,l;do{f=pick(first);l=pick(last)}while(used.has(f+l));used.add(f+l);
-  const lvl=rnd()<.55?'PG':'UG', prog=pick(progs[lvl]);
-  const startedAt=NOW-Math.floor(rnd()*30*DAY)-Math.floor(rnd()*600)*MIN;
-  const kind=rnd();
-  const pays=[];let t=startedAt+Math.floor(rnd()*6)*MIN;
+  const level=rnd()<.55?'PG':'UG', prog=pick(progs[level]);
+  const startedAt=NOW-Math.floor(rnd()*80*DAY)-Math.floor(rnd()*600)*MIN;
+  const pays=[];let t=startedAt+Math.floor(1+rnd()*6)*MIN;
   const open=(result,extra={})=>{const p={opened:t,amount:FEE,result,txn:uuid(),...extra};pays.push(p);t+=Math.floor(5+rnd()*900)*MIN;return p};
-  if(kind<.45){ // paid, maybe after a failed / abandoned try
-    if(rnd()<.35)open(rnd()<.5?'failed':'opened');
-    const p=open('paid');p.settled=p.opened+Math.floor(1+rnd()*4)*MIN;
-  }else if(kind<.52){ // paid then refunded
-    const p=open('paid');p.settled=p.opened+2*MIN;
-    p.refundedAt=p.settled+Math.floor(1+rnd()*3)*DAY;p.result='refunded';
-  }else if(kind<.58){ // in progress (very recent)
-    t=NOW-Math.floor(2+rnd()*20)*MIN;open('pending');
-  }else if(kind<.72){ // tried and failed
-    open('failed');if(rnd()<.4)open('failed');
-  }else if(kind<.82){ // opened, abandoned
-    open('opened');
-  } // else: registered form only, no payment opened
-  learners.push({id:'YDST'+String(10231+i).padStart(5,'0'),name:f+' '+l,email:(f+'.'+l+(i%3?'':i)).toLowerCase()+'@example.com',
-    phone:'9'+String(Math.floor(rnd()*1e9)).padStart(9,'0'),level:lvl,prog,startedAt,pays:pays.sort((a,b)=>b.opened-a.opened)});
+  const k=rnd();
+  if(k<.62){ if(rnd()<.3)open(rnd()<.5?'failed':'opened'); const p=open('paid');p.settled=p.opened+Math.floor(1+rnd()*4)*MIN; }
+  else if(k<.66){ const p=open('paid');p.settled=p.opened+2*MIN;p.refundedAt=p.settled+Math.floor(1+rnd()*3)*DAY;p.result='refunded'; }
+  else if(k<.70){ t=NOW-Math.floor(2+rnd()*20)*MIN;open('pending'); }
+  else if(k<.82){ open('failed');if(rnd()<.4)open('failed'); }
+  else if(k<.91){ open('opened'); }
+  const L={id:'YDST'+String(10231+i),name:f+' '+l,email:(f+'.'+l+(i%3?'':i)).toLowerCase()+'@example.com',
+    phone:'9'+String(Math.floor(rnd()*1e9)).padStart(9,'0'),level,prog,startedAt,pays:pays.filter(p=>p.opened<NOW).sort((a,b)=>b.opened-a.opened),tests:[]};
+  // Tests: only learners whose fee is paid (not refunded). One attempt per calendar month.
+  const paid=L.pays.find(p=>p.result==='paid');
+  if(paid){
+    let skill=Math.max(14,Math.min(55,36+gauss()*9)), {y,m}=istDate(paid.settled), firstMonth=true;
+    while(true){
+      const ms=Math.max(monthStart(y,m),paid.settled+HOUR), me=Math.min(monthStart(y,m+1)-HOUR,NOW-HOUR);
+      if(ms>=NOW)break;
+      const recent=NOW-paid.settled<6*DAY;
+      if(me>ms && rnd()<(recent?.35:firstMonth?.72:.6)){
+        const span=firstMonth?Math.min(me-ms,6*DAY):me-ms;
+        const at=ms+Math.floor(rnd()*span);
+        const sec={};let total=0;
+        SECS.forEach(([c,,mx])=>{const v=Math.round(mx*Math.max(.05,Math.min(1,skill/60+(rnd()-.5)*.28)));sec[c]=v;total+=v});
+        const voided=rnd()<.035;
+        const T={at,month:monthKey(at),paper:level,sec,total,voided,tier:voided?null:tierOf(total)};
+        if(T.tier){T.code='YD'+level+'-'+Array.from({length:5},()=>ALNUM[Math.floor(rnd()*ALNUM.length)]).join('');T.expires=at+30*DAY;
+          T.cstat=(NOW-at>2*DAY&&rnd()<.38)?'enrolled':T.expires<NOW?'expired':'active';}
+        L.tests.push(T);skill+=2+rnd()*3;
+        if(T.cstat==='enrolled')break;
+      }
+      firstMonth=false;m++;if(m>11){m=0;y++}
+      if(monthStart(y,m)>NOW)break;
+    }
+  }
+  learners.push(L);
 }
-learners.forEach(L=>{
+function derive(L){
   const ps=L.pays;
   L.status=ps.some(p=>p.result==='paid')?'paid':ps.some(p=>p.result==='refunded')?'refunded':ps.some(p=>p.result==='pending')?'progress':ps.length&&ps[0].result==='failed'?'failed':'unpaid';
   L.paid=ps.filter(p=>p.result==='paid').reduce((s,p)=>s+p.amount,0);
   L.refunded=ps.filter(p=>p.result==='refunded').reduce((s,p)=>s+p.amount,0);
-  L.last=Math.max(L.startedAt,...ps.flatMap(p=>[p.opened,p.settled||0,p.refundedAt||0]));
-});
+  L.paidAt=(ps.find(p=>p.result==='paid')||{}).settled;
+  const valid=L.tests.filter(t=>!t.voided);
+  L.best=valid.length?Math.max(...valid.map(t=>t.total)):null;
+  L.bestTier=L.best==null?null:tierOf(L.best);
+  L.enrolled=L.tests.some(t=>t.cstat==='enrolled');
+  L.activeCode=L.tests.filter(t=>t.cstat==='active').sort((a,b)=>b.tier-a.tier||b.at-a.at)[0];
+  L.last=Math.max(L.startedAt,...ps.flatMap(p=>[p.opened,p.settled||0,p.refundedAt||0]),...L.tests.map(t=>t.at));
+  L.testedThisMonth=L.tests.some(t=>t.month===monthKey(NOW));
+}
+learners.forEach(derive);
 learners.sort((a,b)=>b.last-a.last);
+const byId=Object.fromEntries(learners.map(L=>[L.id,L]));
+const attempts=()=>learners.flatMap(L=>L.tests.map(T=>({L,T}))).sort((a,b)=>b.T.at-a.T.at);
 
-/* ---- Formatting ---- */
+/* ---------- Formatting ---------- */
 const inr=n=>'₹'+n.toLocaleString('en-IN');
 const fmt=ts=>new Date(ts).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}).replace(',',' at').replace(/\b(am|pm)\b/,m=>m.toUpperCase());
-const ymd=ts=>new Date(ts+5.5*36e5).toISOString().slice(0,10);
+const fmtS=ts=>new Date(ts).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'});
+const fmtD=ts=>new Date(ts).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',year:'numeric'});
+const ymd=ts=>new Date(ts+IST).toISOString().slice(0,10);
+const monthLabel=k=>{const [y,m]=k.split('-');return new Date(Date.UTC(+y,+m-1,1)).toLocaleDateString('en-IN',{month:'long',year:'numeric',timeZone:'UTC'})};
+const ago=ts=>{const d=Math.floor((NOW-ts)/DAY);return d<=0?'today':d===1?'1 day ago':d+' days ago'};
+const inDays=ts=>{const d=Math.ceil((ts-NOW)/DAY);return d<=1?'tomorrow':'in '+d+' days'};
 const initials=n=>n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const STATUS={paid:['Paid · registered','s-paid'],progress:['Payment in progress','s-progress'],failed:['Payment failed','s-failed'],unpaid:['Not paid','s-unpaid'],refunded:['Refunded','s-refunded']};
+const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+const plural=(n,w)=>n+' '+w+(n===1?'':'s');
+const avBg=['#fde7e3','#e3f4ea','#e5ecfd','#fdf0d8','#f0e8fa','#e6f3f6'];
+const av=L=>`<span class="av" style="background:${avBg[L.name.charCodeAt(0)%avBg.length]}">${initials(L.name)}</span>`;
+
+const STATUS={paid:['Paid','s-paid'],progress:['Payment in progress','s-progress'],failed:['Payment failed','s-failed'],unpaid:['Not paid','s-unpaid'],refunded:['Refunded','s-refunded']};
 const RESULT={paid:['Paid','r-paid','approved · success'],failed:['Failed','r-failed','declined · failure'],opened:['Opened · no result','r-opened','— · —'],pending:['Awaiting gateway','r-opened','pending · —'],refunded:['Refunded','r-refunded','approved · refunded']};
-const TABS=[['all','All'],['paid','Paid'],['progress','Payment in progress'],['failed','Payment failed'],['unpaid','Not paid'],['refunded','Refunded']];
+const TIERC={50:'var(--t50)',30:'var(--t30)',15:'var(--t15)',0:'var(--t0)'};
+const tierPill=T=>T.voided?`<span class="tier void">Void · proctoring</span>`:T.tier?`<span class="tier"><i style="background:${TIERC[T.tier]}"></i>${T.tier}% off</span>`:`<span class="tier"><i style="background:${TIERC[0]}"></i>Below 31</span>`;
+const scoreBar=T=>`<div class="score"><b>${T.total}<small>/60</small></b><span class="sbar" aria-hidden="true"><span style="width:${T.total/60*100}%;background:${T.voided?'var(--faint)':TIERC[T.tier]}"></span><i style="left:${31/60*100}%"></i><i style="left:${41/60*100}%"></i><i style="left:${51/60*100}%"></i></span></div>`;
+const secs=T=>SECS.map(([c,,mx])=>`<b>${T.sec[c]}</b>/${mx}`).join(' · ');
+const CSTAT={active:'Active',enrolled:'Used · enrolled',expired:'Expired'};
 
-/* ---- State ---- */
-let tab='all',page=0,openIds=new Set(),filt={q:'',lvl:'',from:'',to:''};
-const avColors=['#fde7e3','#e3f4ea','#e5ecfd','#fdf0d8','#f0e8fa','#e6f3f6'];
+/* ---------- Tooltip + toast ---------- */
+const tip=$('#tip');
+document.addEventListener('pointermove',e=>{
+  const el=e.target.closest('[data-tip]');
+  if(!el){tip.classList.remove('show');return}
+  tip.innerHTML=el.dataset.tip;tip.classList.add('show');
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let x=e.clientX+14,y=e.clientY-h-12;
+  if(x+w>innerWidth-8)x=e.clientX-w-14; if(y<8)y=e.clientY+16;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400)}
+function downloadCSV(name,rows){
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}));
+  a.download=`${name}-${ymd(Date.now())}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
 
-$('#lvl').innerHTML+=Object.entries(progs).map(([k,v])=>`<optgroup label="${k==='PG'?'Postgraduate':'Undergraduate'}">${v.map(p=>`<option value="${p}">${p}</option>`).join('')}</optgroup>`).join('');
+/* ---------- Routing ---------- */
+const VIEWS=['overview','payments','results'];
+function route(){
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'overview';
+  VIEWS.forEach(x=>$('#v-'+x).hidden=x!==v);
+  $$('.nav a').forEach(a=>{const on=a.dataset.view===v;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  ({overview:renderOverview,payments:renderPay,results:renderRes})[v]();
+}
+addEventListener('hashchange',()=>{route();scrollTo({top:0})});
 
-function base(){
-  const q=filt.q.trim().toLowerCase();
+/* ---------- Overview ---------- */
+function renderOverview(){
+  const n=learners.length, paid=learners.filter(L=>L.status==='paid'), tested=learners.filter(L=>L.tests.length);
+  const earned=learners.filter(L=>L.bestTier>0), enrolled=learners.filter(L=>L.enrolled);
+  const coll=learners.reduce((s,L)=>s+L.paid,0), at=attempts(), thisM=at.filter(a=>a.T.month===monthKey(NOW)).length;
+  $('#ovKpis').innerHTML=[
+    ['fee','Fees collected',inr(coll),`${paid.length} × ₹${FEE}`],
+    ['fee','Paid registrations',paid.length,`${pct(paid.length,n)} of ${n} who started`],
+    ['test','Test attempts',at.length,`${thisM} in ${monthLabel(monthKey(NOW)).split(' ')[0]}`],
+    ['test','Earned a scholarship',earned.length,`${pct(earned.length,tested.length)} of learners tested`],
+    ['test','Enrolled with code',enrolled.length,`${pct(enrolled.length,earned.length)} of scholarship earners`],
+  ].map(([lane,l,v,s])=>`<div class="kpi" data-lane="${lane}"><span><i></i>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
+
+  const steps=[['fee','Started registration',n],['fee','Paid ₹100 fee',paid.length],['test','Took a test',tested.length],['test','Scored 31+',earned.length],['test','Enrolled with code',enrolled.length]];
+  $('#funnel').innerHTML=steps.map(([lane,l,v],i)=>`<div class="fstep" data-lane="${lane}" data-tip="<b>${l}</b><br>${v} learners · ${pct(v,n)} of all who started">
+    <span class="lbl"><i style="background:var(--lane)"></i>${l}</span>
+    <span class="track"><span class="fill" style="width:${v/n*100}%;background:var(--lane)"></span></span>
+    <span class="v"><b>${v}</b><small>${i?pct(v,steps[i-1][2])+' of previous':'100%'}</small></span></div>`).join('');
+
+  const groups=[['50% off','51–60',TIERC[50],learners.filter(L=>L.bestTier===50).length],['30% off','41–50',TIERC[30],learners.filter(L=>L.bestTier===30).length],['15% off','31–40',TIERC[15],learners.filter(L=>L.bestTier===15).length],['Below 31','0–30',TIERC[0],learners.filter(L=>L.bestTier===0).length]];
+  const tot=groups.reduce((s,g)=>s+g[3],0)||1;
+  $('#mixBar').innerHTML=`<div class="bar" role="img" aria-label="Best score per learner: ${groups.map(g=>g[0]+' '+g[3]).join(', ')}">${groups.filter(g=>g[3]).map(g=>`<span style="flex:${g[3]};background:${g[2]}" data-tip="<b>${g[0]}</b> · best score ${g[1]}<br>${plural(g[3],'learner')} · ${pct(g[3],tot)}"></span>`).join('')}</div>`;
+  $('#mixList').innerHTML=groups.map(g=>`<span class="k"><i style="background:${g[2]}"></i>${g[0]} <span style="color:var(--faint)">· score ${g[1]}</span></span><span class="n">${g[3]}</span><span class="p">${pct(g[3],tot)}</span>`).join('')+
+    `<span class="k" style="color:var(--muted)"><i style="background:transparent;border:1px dashed var(--line-hover)"></i>Paid, not tested yet</span><span class="n">${paid.filter(L=>!L.tests.length).length}</span><span class="p"></span>`;
+
+  // Histogram: bins of 5 marks
+  const valid=at.filter(a=>!a.T.voided).map(a=>a.T.total);
+  $('#histN').textContent=`${valid.length} attempts · ${at.length-valid.length} voided`;
+  // Bins end on the cut-offs: 0–5, 6–10 … 26–30, 31–35 … 56–60, so no bar mixes two scholarship levels.
+  const bins=Array.from({length:12},(_,i)=>({lo:i?i*5+1:0,hi:i*5+5,n:0}));
+  valid.forEach(s=>bins[Math.max(0,Math.ceil(s/5)-1)].n++);
+  const W=720,H=210,pl=30,pr=8,pt=24,pb=26,iw=W-pl-pr,ih=H-pt-pb,max=Math.max(4,...bins.map(b=>b.n));
+  const step=Math.ceil(max/4), yMax=step*4, x=s=>pl+(s+.5)/61*iw, y=v=>pt+ih-v/yMax*ih;
+  let g='';
+  for(let v=0;v<=yMax;v+=step)g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line-2)"/><text class="ax" x="${pl-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+  bins.forEach(b=>{
+    const x0=x(b.lo-.5)+1,x1=x(b.hi+.5)-1,h=ih-(y(b.n)-pt), r=Math.min(4,h);
+    const col=TIERC[tierOf(b.hi)], tipT=`<b>${b.lo}–${b.hi} marks</b> · ${tierOf(b.hi)?tierOf(b.hi)+'% off':'no scholarship'}<br>${plural(b.n,'attempt')}`;
+    if(b.n)g+=`<path class="bar" d="M${x0},${pt+ih} V${y(b.n)+r} q0,-${r} ${r},-${r} H${x1-r} q${r},0 ${r},${r} V${pt+ih} Z" fill="${col}"/>`;
+    g+=`<rect class="hit" x="${x0}" y="${pt}" width="${x1-x0}" height="${ih}" data-tip="${tipT}"/>`;
+  });
+  [[31,'15%'],[41,'30%'],[51,'50%']].forEach(([c,l])=>g+=`<line class="cut" x1="${x(c-.5)}" x2="${x(c-.5)}" y1="${pt-8}" y2="${pt+ih}"/><text class="cutl" x="${x(c-.5)+4}" y="${pt-10}">${c}+ · ${l}</text>`);
+  [0,10,20,30,40,50,60].forEach(v=>g+=`<text class="ax" x="${x(v)}" y="${H-8}" text-anchor="middle">${v}</text>`);
+  g+=`<line x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}" stroke="var(--line-hover)"/>`;
+  $('#hist').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogram of test scores in 5-mark bins">${g}</svg>`;
+  $('#histLegend').innerHTML=[[0,'Below 31 · no scholarship'],[15,'31–40 · 15% off'],[30,'41–50 · 30% off'],[50,'51–60 · 50% off']].map(([t,l])=>`<span><i style="background:${TIERC[t]}"></i>${l}</span>`).join('')+`<span style="color:var(--muted)">Each bar groups 5 marks. Dashed lines are the cut-offs.</span>`;
+
+  // Follow-ups
+  const fu=[
+    {lane:'fee',tag:'Fee',title:'Payment not completed',why:'Opened payment but it failed or was abandoned',list:learners.filter(L=>L.status==='failed'||(L.status==='unpaid'&&L.pays.length)).sort((a,b)=>b.last-a.last),meta:L=>STATUS[L.status][0]==='Not paid'?'abandoned':'failed'},
+    {lane:'test',tag:'Test',title:'Paid, no test yet',why:'Fee paid but no attempt taken',list:paid.filter(L=>!L.tests.length).sort((a,b)=>a.paidAt-b.paidAt),meta:L=>'paid '+ago(L.paidAt)},
+    {lane:'test',tag:'Test',title:'Code expiring soon',why:'Scholarship code expires within 14 days, not enrolled',list:learners.filter(L=>L.activeCode&&L.activeCode.expires-NOW<14*DAY).sort((a,b)=>a.activeCode.expires-b.activeCode.expires),meta:L=>`${L.activeCode.tier}% · ${inDays(L.activeCode.expires)}`},
+    {lane:'test',tag:'Test',title:'Close to a scholarship',why:'Best score 27–30, just under 31',list:learners.filter(L=>L.best!=null&&L.best>=27&&L.best<31).sort((a,b)=>b.best-a.best),meta:L=>`best ${L.best}/60`},
+  ];
+  $('#followups').innerHTML=fu.map(c=>`<div class="fu" data-lane="${c.lane}"><h3><span class="lane-tag">${c.tag}</span>${c.title}</h3><div class="cnt">${c.list.length}</div><p class="why">${c.why}</p>
+    ${c.list.length?`<ul>${c.list.slice(0,5).map(L=>`<li><button data-open="${L.id}"><b>${esc(L.name)}</b><span>${c.meta(L)}</span></button></li>`).join('')}</ul>${c.list.length>5?`<p class="more">+ ${c.list.length-5} more</p>`:''}`:`<p class="none">Nobody right now.</p>`}</div>`).join('');
+}
+
+/* ---------- Payments ---------- */
+const PTABS=[['all','All'],['paid','Paid'],['progress','Payment in progress'],['failed','Payment failed'],['unpaid','Not paid'],['refunded','Refunded']];
+let ptab='all',ppage=0,popen=new Set(),pf={q:'',lvl:'',from:'',to:''};
+const progOpts='<option value="">All programs</option>'+Object.entries(progs).map(([k,v])=>`<optgroup label="${k==='PG'?'Postgraduate':'Undergraduate'}">${v.map(p=>`<option value="${p}">${p}</option>`).join('')}</optgroup>`).join('');
+$('#plvl').innerHTML=progOpts;
+function payBase(){
+  const q=pf.q.trim().toLowerCase();
   return learners.filter(L=>{
-    if(filt.lvl&&L.prog!==filt.lvl)return false;
+    if(pf.lvl&&L.prog!==pf.lvl)return false;
     if(q&&!(L.name.toLowerCase().includes(q)||L.email.includes(q)||L.phone.includes(q)||L.id.toLowerCase().includes(q)||L.pays.some(p=>p.txn.includes(q))))return false;
-    if(filt.from||filt.to){
-      const days=[L.startedAt,...L.pays.map(p=>p.opened)].map(ymd);
-      if(!days.some(d=>(!filt.from||d>=filt.from)&&(!filt.to||d<=filt.to)))return false;
-    }
+    if(pf.from||pf.to){const days=[L.startedAt,...L.pays.map(p=>p.opened)].map(ymd);if(!days.some(d=>(!pf.from||d>=pf.from)&&(!pf.to||d<=pf.to)))return false}
     return true;
   });
 }
-function render(){
-  const all=base(), list=tab==='all'?all:all.filter(L=>L.status===tab);
-  // tabs
-  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${k===tab?' on':''}" role="tab" aria-selected="${k===tab}" data-tab="${k}">${l}<em>${k==='all'?all.length:all.filter(L=>L.status===k).length}</em></button>`).join('');
-  // KPIs (filtered set)
-  const paidN=all.filter(L=>L.status==='paid').length, coll=all.reduce((s,L)=>s+L.paid,0), ref=all.reduce((s,L)=>s+L.refunded,0);
+const payList=()=>{const b=payBase();return ptab==='all'?b:b.filter(L=>L.status===ptab)};
+function renderPay(){
+  const all=payBase(), list=payList();
+  $('#payTabs').innerHTML=PTABS.map(([k,l])=>`<button class="tab${k===ptab?' on':''}" role="tab" aria-selected="${k===ptab}" data-tab="${k}">${l}<em>${k==='all'?all.length:all.filter(L=>L.status===k).length}</em></button>`).join('');
+  const paidN=all.filter(L=>L.status==='paid').length, coll=all.reduce((s,L)=>s+L.paid,0), ref=all.reduce((s,L)=>s+L.refunded,0), rN=all.filter(L=>L.status==='refunded').length;
   const unpaid=all.filter(L=>['unpaid','failed','progress'].includes(L.status)).length;
-  $('#kCollected').textContent=inr(coll);$('#kCollectedSub').textContent=`${paidN} × ₹${FEE} fee`;
-  $('#kPaid').textContent=paidN;$('#kPaidSub').textContent=all.length?`${Math.round(paidN/all.length*100)}% of ${all.length} learners`:'—';
-  $('#kUnpaid').textContent=unpaid;$('#kUnpaidSub').textContent=`${all.filter(L=>L.status==='failed').length} failed · ${all.filter(L=>L.status==='progress').length} in progress`;
-  $('#kRefund').textContent=inr(ref);const rN=all.filter(L=>L.status==='refunded').length;$('#kRefundSub').textContent=`${rN} learner${rN===1?'':'s'}`;
-  // summary
-  const attempts=list.reduce((s,L)=>s+L.pays.length,0);
-  $('#summary').innerHTML=`<b>${list.length}</b> learners · <b>${attempts}</b> payment attempts · <b>${inr(list.reduce((s,L)=>s+L.paid,0))}</b> collected`;
-  // page
-  const pages=Math.max(1,Math.ceil(list.length/PAGE));page=Math.min(page,pages-1);
-  const slice=list.slice(page*PAGE,page*PAGE+PAGE);
-  $('#rows').innerHTML=slice.length?slice.map(row).join(''):`<tr><td colspan="6" class="empty">No learners match these filters.</td></tr>`;
-  $('#range').textContent=list.length?`${page*PAGE+1}–${page*PAGE+slice.length} of ${list.length} learners`:'';
-  $('#prev').disabled=page===0;$('#next').disabled=page>=pages-1;
-  $('#expandAll').textContent=slice.length&&slice.every(L=>openIds.has(L.id))?'Collapse all':'Expand all';
+  $('#payKpis').innerHTML=[['Collected',inr(coll),`${paidN} × ₹${FEE} fee`],['Paid',paidN,`${pct(paidN,all.length)} of ${plural(all.length,'learner')}`],['Not paid yet',unpaid,`${all.filter(L=>L.status==='failed').length} failed · ${all.filter(L=>L.status==='progress').length} in progress`],['Refunded',inr(ref),plural(rN,'learner')]]
+    .map(([l,v,s])=>`<div class="kpi" data-lane="fee"><span><i></i>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
+  $('#paySummary').innerHTML=`<b>${list.length}</b> learners · <b>${list.reduce((s,L)=>s+L.pays.length,0)}</b> payment attempts · <b>${inr(list.reduce((s,L)=>s+L.paid,0))}</b> collected`;
+  const pages=Math.max(1,Math.ceil(list.length/PAGE));ppage=Math.min(ppage,pages-1);
+  const slice=list.slice(ppage*PAGE,ppage*PAGE+PAGE);
+  $('#payRows').innerHTML=slice.length?slice.map(payRow).join(''):`<tr><td colspan="6" class="empty">No learners match these filters.</td></tr>`;
+  $('#payRange').textContent=list.length?`${ppage*PAGE+1}–${ppage*PAGE+slice.length} of ${list.length} learners`:'';
+  $('#payPrev').disabled=ppage===0;$('#payNext').disabled=ppage>=pages-1;
+  $('#expandAll').textContent=slice.length&&slice.every(L=>popen.has(L.id))?'Collapse all':'Expand all';
 }
-function row(L){
-  const [sl,sc]=STATUS[L.status], o=openIds.has(L.id);
-  const bg=avColors[L.name.charCodeAt(0)%avColors.length];
+function payRow(L){
+  const [sl,sc]=STATUS[L.status], o=popen.has(L.id);
   return `<tr class="row${o?' open':''}" data-id="${L.id}" tabindex="0" aria-expanded="${o}">
-    <td><div class="who"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg><span class="av" style="background:${bg}">${initials(L.name)}</span><div style="min-width:0"><b>${esc(L.name)}</b><small>${esc(L.email)} · ${L.phone}</small><span class="mob">${L.level} · ${L.prog} · ${fmt(L.last)}<br><span class="pill ${sc}">${sl}</span></span></div></div></td>
-    <td class="c-prog"><div class="prog">${L.prog}<small>${L.level==='PG'?'Postgraduate':'Undergraduate'}</small></div></td>
-    <td class="c-status"><span class="pill ${sc}">${sl}</span></td>
-    <td class="num c-att">${L.pays.length}</td>
-    <td class="num c-paid">${inr(L.paid)}</td>
-    <td class="c-date"><span class="date">${fmt(L.last)}</span></td>
-  </tr>${o?detail(L):''}`;
+    <td><div class="who"><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>${av(L)}<div><b>${esc(L.name)}</b><small>${esc(L.email)} · ${L.phone}</small><span class="mob">${L.level} · ${L.prog} · ${fmt(L.last)}<br><span class="pill ${sc}">${sl}</span></span></div></div></td>
+    <td class="c-hide-md"><div class="sub2">${L.prog}<small>${L.level==='PG'?'Postgraduate':'Undergraduate'}</small></div></td>
+    <td class="c-hide-sm"><span class="pill ${sc}">${sl}</span></td>
+    <td class="r num c-hide-md">${L.pays.length}</td>
+    <td class="r num c-hide-sm">${inr(L.paid)}</td>
+    <td class="c-hide-sm"><span class="date">${fmt(L.last)}</span></td>
+  </tr>${o?payDetail(L):''}`;
 }
-function detail(L){
-  const [sl,sc]=STATUS[L.status];
-  const body=L.pays.length?`<table class="ptbl"><thead><tr><th>Opened</th><th>Amount</th><th>Result</th><th>Gateway said · confirmed</th><th>Settled</th><th>Transaction id</th></tr></thead><tbody>${L.pays.map(p=>{
+function payTable(L){
+  return L.pays.length?`<table class="ptbl"><thead><tr><th>Opened</th><th>Amount</th><th>Result</th><th>Gateway said · confirmed</th><th>Settled</th><th>Transaction id</th></tr></thead><tbody>${L.pays.map(p=>{
     const [rl,rc,gw]=RESULT[p.result];
     return `<tr><td class="t-open">${fmt(p.opened)}</td><td class="t-amt">${inr(p.amount)}</td><td class="t-res res ${rc}">${rl}</td><td class="t-gw gw" data-k="Gateway">${gw}</td><td class="t-set" data-k="Settled">${p.settled?fmt(p.settled):'—'}${p.refundedAt?`<br><span class="r-refunded">Refunded ${fmt(p.refundedAt)}</span>`:''}</td><td class="t-txn"><span class="txn">${p.txn}<button class="copy" data-copy="${p.txn}" aria-label="Copy transaction id" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button></span></td></tr>`}).join('')}</tbody></table>`
-    :`<p class="empty-p">Registration form submitted. No payment opened yet.</p>`;
+  :`<p class="empty-p">Registration form submitted. No payment opened yet.</p>`;
+}
+function payDetail(L){
   return `<tr class="detail"><td colspan="6"><div class="dbox">
     <div class="dhead">
       <div class="item"><span>Registration id</span><b>${L.id}</b></div>
-      <div class="item"><span>Program</span><b>${L.level} · ${L.prog}</b></div>
       <div class="item"><span>Started</span><b>${fmt(L.startedAt)}</b></div>
       <div class="item"><span>Fee</span><b>${inr(L.paid)} of ${inr(FEE)}</b></div>
-      <div class="item"><span>Attempts</span><b>${L.pays.length} payment${L.pays.length===1?'':'s'}</b></div>
-      <span class="pill ${sc}">${sl}</span>
-    </div>${body}</div></td></tr>`;
+      <div class="item"><span>Payment attempts</span><b>${L.pays.length}</b></div>
+      <button class="btn" data-open="${L.id}">Open learner profile →</button>
+    </div>${payTable(L)}</div></td></tr>`;
 }
-
-/* ---- Events ---- */
-$('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;page=0;render()};
-const toggle=id=>{openIds.has(id)?openIds.delete(id):openIds.add(id);render()};
-$('#rows').onclick=e=>{
+$('#payTabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;ptab=b.dataset.tab;ppage=0;renderPay()};
+const ptoggle=id=>{popen.has(id)?popen.delete(id):popen.add(id);renderPay()};
+$('#payRows').onclick=e=>{
   const c=e.target.closest('[data-copy]');
-  if(c){e.stopPropagation();navigator.clipboard?.writeText(c.dataset.copy).then(()=>toast('Transaction id copied'),()=>{});return}
-  const r=e.target.closest('.row');if(r)toggle(r.dataset.id);
+  if(c){e.stopPropagation();(navigator.clipboard?navigator.clipboard.writeText(c.dataset.copy):Promise.reject()).then(()=>toast('Transaction id copied'),()=>toast(c.dataset.copy));return}
+  if(e.target.closest('[data-open]'))return;
+  const r=e.target.closest('.row');if(r)ptoggle(r.dataset.id);
 };
-$('#rows').onkeydown=e=>{const r=e.target.closest('.row');if(r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggle(r.dataset.id);document.querySelector(`.row[data-id="${r.dataset.id}"]`)?.focus()}};
-$('#expandAll').onclick=()=>{const rows=[...document.querySelectorAll('.row')].map(r=>r.dataset.id);const all=rows.every(id=>openIds.has(id));rows.forEach(id=>all?openIds.delete(id):openIds.add(id));render()};
-$('#prev').onclick=()=>{page--;render()};$('#next').onclick=()=>{page++;render()};
-$('#apply').onclick=()=>{filt={q:$('#q').value,lvl:$('#lvl').value,from:$('#from').value,to:$('#to').value};page=0;render()};
-$('#q').oninput=()=>{filt.q=$('#q').value;page=0;render()};
-$('#lvl').onchange=()=>{filt.lvl=$('#lvl').value;page=0;render()};
-
-let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
-
+$('#payRows').onkeydown=e=>{const r=e.target.closest('.row');if(r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();ptoggle(r.dataset.id);$(`#payRows .row[data-id="${r.dataset.id}"]`)?.focus()}};
+$('#expandAll').onclick=()=>{const ids=$$('#payRows .row').map(r=>r.dataset.id);const all=ids.every(id=>popen.has(id));ids.forEach(id=>all?popen.delete(id):popen.add(id));renderPay()};
+$('#payPrev').onclick=()=>{ppage--;renderPay()};$('#payNext').onclick=()=>{ppage++;renderPay()};
+$('#papply').onclick=()=>{pf={q:$('#pq').value,lvl:$('#plvl').value,from:$('#pfrom').value,to:$('#pto').value};ppage=0;renderPay()};
+$('#pq').oninput=()=>{pf.q=$('#pq').value;ppage=0;renderPay()};
+$('#plvl').onchange=()=>{pf.lvl=$('#plvl').value;ppage=0;renderPay()};
 $('#refresh').onclick=()=>{
   const b=$('#refresh');b.classList.add('spin');b.disabled=true;
   setTimeout(()=>{
-    let n=0;
-    learners.forEach(L=>L.pays.forEach(p=>{if(p.result==='pending'){p.result='paid';p.settled=NOW;n++}}));
-    learners.forEach(L=>{if(L.pays.some(p=>p.result==='paid')&&L.status==='progress'){L.status='paid';L.paid=FEE}});
-    b.classList.remove('spin');b.disabled=false;render();
-    toast(n?`${n} pending payment${n>1?'s':''} confirmed by gateway`:'All payment statuses are up to date');
+    let n=0;learners.forEach(L=>{L.pays.forEach(p=>{if(p.result==='pending'){p.result='paid';p.settled=NOW;n++}});derive(L)});
+    b.classList.remove('spin');b.disabled=false;renderPay();
+    toast(n?`${plural(n,'pending payment')} confirmed by gateway`:'All payment statuses are up to date');
   },900);
 };
-
-$('#export').onclick=()=>{
-  const list=tab==='all'?base():base().filter(L=>L.status===tab);
-  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
-  const lines=[['Registration id','Name','Email','Phone','Level','Program','Status','Paid (INR)','Payment opened','Amount (INR)','Result','Settled','Transaction id'].map(q).join(',')];
-  list.forEach(L=>{
-    const st=STATUS[L.status][0];
-    if(!L.pays.length)lines.push([L.id,L.name,L.email,L.phone,L.level,L.prog,st,L.paid,'','','','',''].map(q).join(','));
-    L.pays.forEach(p=>lines.push([L.id,L.name,L.email,L.phone,L.level,L.prog,st,L.paid,fmt(p.opened),p.amount,RESULT[p.result][0],p.settled?fmt(p.settled):'',p.txn].map(q).join(',')));
-  });
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv'}));
-  a.download=`ydst-registration-payments-${ymd(Date.now())}.csv`;a.click();URL.revokeObjectURL(a.href);
-  toast(`Exported ${list.length} learners`);
+$('#payExport').onclick=()=>{
+  const list=payList(), rows=[['Registration id','Name','Email','Phone','Level','Program','Fee status','Paid (INR)','Payment opened','Amount (INR)','Result','Settled','Transaction id']];
+  list.forEach(L=>{const st=STATUS[L.status][0],b=[L.id,L.name,L.email,L.phone,L.level,L.prog,st,L.paid];
+    if(!L.pays.length)rows.push([...b,'','','','','']);
+    L.pays.forEach(p=>rows.push([...b,fmt(p.opened),p.amount,RESULT[p.result][0],p.settled?fmt(p.settled):'',p.txn]))});
+  downloadCSV('ydst-registration-fees',rows);toast(`Exported ${plural(list.length,'learner')}`);
 };
 
-render();
+/* ---------- Results ---------- */
+const RTABS=[['all','All'],['50','50% off'],['30','30% off'],['15','15% off'],['0','Below 31'],['void','Void']];
+let rtab='all',rpage=0,rf={q:'',paper:'',month:'',code:''};
+const months=[...new Set(attempts().map(a=>a.T.month))].sort().reverse();
+$('#rmonth').innerHTML='<option value="">All months</option>'+months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+const rkey=T=>T.voided?'void':String(T.tier);
+function resBase(){
+  const q=rf.q.trim().toLowerCase();
+  return attempts().filter(({L,T})=>{
+    if(rf.paper&&T.paper!==rf.paper)return false;
+    if(rf.month&&T.month!==rf.month)return false;
+    if(rf.code&&T.cstat!==rf.code)return false;
+    if(q&&!(L.name.toLowerCase().includes(q)||L.email.includes(q)||L.phone.includes(q)||L.id.toLowerCase().includes(q)||(T.code||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+}
+const resList=()=>{const b=resBase();return rtab==='all'?b:b.filter(a=>rkey(a.T)===rtab)};
+function renderRes(){
+  const all=resBase(), list=resList(), valid=all.filter(a=>!a.T.voided);
+  $('#resTabs').innerHTML=RTABS.map(([k,l])=>`<button class="tab${k===rtab?' on':''}" role="tab" aria-selected="${k===rtab}" data-tab="${k}">${l}<em>${k==='all'?all.length:all.filter(a=>rkey(a.T)===k).length}</em></button>`).join('');
+  const avg=valid.length?(valid.reduce((s,a)=>s+a.T.total,0)/valid.length).toFixed(1):'—';
+  const q=valid.filter(a=>a.T.tier>0).length, top=valid.filter(a=>a.T.tier===50).length;
+  const codes=all.filter(a=>a.T.cstat==='active').length;
+  $('#resKpis').innerHTML=[['Test attempts',all.length,`${plural(new Set(all.map(a=>a.L.id)).size,'learner')} · ${all.length-valid.length} voided`],['Average score',avg+(valid.length?'<small style="font-size:14px;color:var(--muted)">/60</small>':''),'valid attempts only'],['Scored 31+',pct(q,valid.length),`${plural(q,'attempt')} earned a code`],['Active codes',codes,`${top} attempts hit 50% off`]]
+    .map(([l,v,s])=>`<div class="kpi" data-lane="test"><span><i></i>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
+  $('#resSummary').innerHTML=`<b>${list.length}</b> attempts${rf.month?' in <b>'+monthLabel(rf.month)+'</b>':''}`;
+  const pages=Math.max(1,Math.ceil(list.length/PAGE));rpage=Math.min(rpage,pages-1);
+  const slice=list.slice(rpage*PAGE,rpage*PAGE+PAGE);
+  $('#resRows').innerHTML=slice.length?slice.map(({L,T})=>`<tr class="row" data-open="${L.id}" tabindex="0">
+    <td><div class="who">${av(L)}<div><b>${esc(L.name)}</b><small>${L.prog} · ${L.level==='PG'?"Master's paper":"Bachelor's paper"}</small><span class="mob">${fmt(T.at)}<br>${scoreBar(T)}${tierPill(T)}</span></div></div></td>
+    <td class="c-hide-sm"><span class="date">${fmt(T.at)}</span></td>
+    <td class="c-hide-sm">${scoreBar(T)}</td>
+    <td class="c-hide-md"><span class="secs">${secs(T)}</span></td>
+    <td class="c-hide-sm">${tierPill(T)}</td>
+    <td class="c-hide-md">${T.code?`<span class="code">${T.code}</span><br><span class="cstat ${T.cstat}">${CSTAT[T.cstat]}${T.cstat==='active'?' · till '+fmtS(T.expires):''}</span>`:'<span class="cstat">—</span>'}</td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">No test attempts match these filters.</td></tr>`;
+  $('#resRange').textContent=list.length?`${rpage*PAGE+1}–${rpage*PAGE+slice.length} of ${list.length} attempts`:'';
+  $('#resPrev').disabled=rpage===0;$('#resNext').disabled=rpage>=pages-1;
+}
+$('#resTabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;rtab=b.dataset.tab;rpage=0;renderRes()};
+$('#resPrev').onclick=()=>{rpage--;renderRes()};$('#resNext').onclick=()=>{rpage++;renderRes()};
+$('#rq').oninput=()=>{rf.q=$('#rq').value;rpage=0;renderRes()};
+['rpaper','rmonth','rcode'].forEach(id=>$('#'+id).onchange=()=>{rf[id.slice(1)]=$('#'+id).value;rpage=0;renderRes()});
+$('#resRows').onkeydown=e=>{const r=e.target.closest('[data-open]');if(r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openLearner(r.dataset.open)}};
+$('#resExport').onclick=()=>{
+  const list=resList(), rows=[['Registration id','Name','Email','Phone','Paper','Program','Taken','Score (/60)','LR (/20)','QA (/15)','VA (/15)','AR (/10)','Result','Scholarship code','Code status','Code expires']];
+  list.forEach(({L,T})=>rows.push([L.id,L.name,L.email,L.phone,L.level==='PG'?"Master's":"Bachelor's",L.prog,fmt(T.at),T.total,T.sec.LR,T.sec.QA,T.sec.VA,T.sec.AR,T.voided?'Void (proctoring)':T.tier?T.tier+'% off':'Below 31',T.code||'',T.cstat?CSTAT[T.cstat]:'',T.expires?fmtD(T.expires):'']));
+  downloadCSV('ydst-test-results',rows);toast(`Exported ${plural(list.length,'attempt')}`);
+};
+
+/* ---------- Learner profile drawer ---------- */
+let lastFocus=null;
+function nextAttempt(L){
+  if(L.status!=='paid')return 'After fee is paid';
+  if(L.enrolled)return 'Enrolled · no more attempts';
+  if(!L.testedThisMonth)return 'Available now';
+  const {y,m}=istDate(NOW);return 'From '+fmtD(monthStart(y,m+1)+HOUR);
+}
+function openLearner(id){
+  const L=byId[id];if(!L)return;
+  lastFocus=document.activeElement;
+  const [sl,sc]=STATUS[L.status];
+  const j=[
+    ['Registered',true,fmtD(L.startedAt)],
+    ['Fee paid',L.status==='paid',L.status==='paid'?fmtD(L.paidAt):STATUS[L.status][0],L.status!=='paid'&&L.status!=='unpaid'],
+    ['Tested',L.tests.length>0,L.tests.length?plural(L.tests.length,'attempt'):'—'],
+    ['Scholarship',L.bestTier>0,L.bestTier>0?L.bestTier+'% off':L.best!=null?'Best '+L.best+'/60':'—',L.best!=null&&!L.bestTier],
+    ['Enrolled',L.enrolled,L.enrolled?'Yes':'—'],
+  ];
+  $('#drTop').innerHTML=`${av(L)}<div style="min-width:0"><h2 id="drName">${esc(L.name)}</h2><p>${esc(L.email)} · ${L.phone}</p><p>${L.id} · ${L.level==='PG'?'Postgraduate':'Undergraduate'} · ${L.prog}</p></div>
+    <button class="dr-x" id="drClose" aria-label="Close profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+  const best=L.best!=null?L.best+'/60':'—';
+  $('#drBody').innerHTML=`
+    <div class="journey" aria-label="Learner journey">${j.map(([l,done,sub,warn])=>`<div class="jstep${done?' done':warn?' warn':''}"><span class="dot">${done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>':warn?'!':''}</span><span><b>${l}</b>${sub}</span></div>`).join('')}</div>
+
+    <section class="sec" data-lane="fee" aria-label="Registration fee">
+      <div class="sec-h"><span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 9h12M13 20 6 13h3a4 4 0 0 0 0-9"/></svg>Fee</span><h3>Registration fee</h3><span class="pill ${sc}">${sl}</span></div>
+      <div class="facts"><div><span>Paid</span><b>${inr(L.paid)} of ${inr(FEE)}</b></div><div><span>Paid on</span><b>${L.paidAt?fmtD(L.paidAt):'—'}</b></div><div><span>Payment attempts</span><b>${L.pays.length}</b></div></div>
+      ${L.pays.length?`<ul class="alist">${L.pays.map(p=>{const [rl,rc,gw]=RESULT[p.result];return `<li><span>${fmt(p.opened)}<br><span class="m">${gw} · <span class="code">${p.txn.slice(0,13)}…</span></span></span><span class="rt"><b class="res ${rc}">${rl}</b><br><span class="m">${inr(p.amount)}</span></span></li>`}).join('')}</ul>`:'<p class="empty-p">No payment opened yet.</p>'}
+    </section>
+
+    <section class="sec" data-lane="test" aria-label="Test results">
+      <div class="sec-h"><span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Test</span><h3>Test results</h3>${L.bestTier!=null?`<span class="tier"><i style="background:${TIERC[L.bestTier]}"></i>${L.bestTier?L.bestTier+'% off':'No scholarship yet'}</span>`:''}</div>
+      <div class="facts"><div><span>Best score</span><b>${best}</b></div><div><span>Attempts</span><b>${L.tests.length}</b></div><div><span>Next attempt</span><b>${nextAttempt(L)}</b></div></div>
+      ${L.tests.length?`<ul class="alist">${[...L.tests].reverse().map(T=>`<li><span>${monthLabel(T.month)}<br><span class="m">${fmt(T.at)}</span><br><span class="secs">${secs(T)}</span></span><span class="rt">${scoreBar(T)}<div style="margin-top:6px">${tierPill(T)}</div>${T.code?`<div style="margin-top:4px"><span class="code">${T.code}</span><br><span class="cstat ${T.cstat}">${CSTAT[T.cstat]}${T.cstat==='active'?' · till '+fmtD(T.expires):''}</span></div>`:''}</span></li>`).join('')}</ul>`
+        :`<p class="empty-p">${L.status==='paid'?'Fee paid. No test taken yet.':'Tests unlock once the ₹100 fee is paid.'}</p>`}
+    </section>`;
+  $('#scrim').hidden=false;$('#drawer').hidden=false;
+  requestAnimationFrame(()=>document.body.classList.add('drawer-open'));
+  document.documentElement.style.overflow='hidden';
+  $('#drClose').focus();
+}
+function closeLearner(){
+  document.body.classList.remove('drawer-open');document.documentElement.style.overflow='';
+  setTimeout(()=>{$('#scrim').hidden=true;$('#drawer').hidden=true},180);
+  lastFocus?.focus?.();
+}
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]');
+  if(o&&!e.target.closest('[data-copy]')){openLearner(o.dataset.open);return}
+  if(e.target.closest('#drClose')||e.target.id==='scrim')closeLearner();
+});
+document.addEventListener('keydown',e=>{
+  if($('#drawer').hidden)return;
+  if(e.key==='Escape')closeLearner();
+  if(e.key==='Tab'){const f=$$('#drawer button,#drawer a[href]');if(!f.length)return;const a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+});
+
+route();
 </script>
 </body>
 </html>
