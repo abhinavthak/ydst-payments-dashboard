@@ -419,7 +419,6 @@ a{color:inherit}
   <div class="vhead">
     <div>
       <h1 id="h-results">Test results <span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>60 marks · 1 attempt a month</span></h1>
-      <p>One row per test attempt. Score 31+ for 15% off, 41+ for 30% off, 51+ for 50% off first-semester tuition. Fee payments are in <a href="#payments">Registration fees</a>.</p>
     </div>
     <div class="acts">
       <button class="btn primary" id="resExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Export CSV</button>
@@ -436,7 +435,7 @@ a{color:inherit}
     <div class="tabs" id="resTabs" role="tablist" aria-label="Result"></div>
     <div class="sumbar"><span id="resSummary"></span></div>
     <table class="tbl">
-      <thead><tr><th>Learner</th><th class="c-hide-sm">Taken</th><th class="c-hide-sm">Score</th><th class="c-hide-md">Sections <span style="text-transform:none;letter-spacing:0;font-weight:500">(LR · QA · VA · AR)</span></th><th class="c-hide-sm">Result</th><th class="c-hide-md">Scholarship code</th></tr></thead>
+      <thead><tr><th>Learner</th><th class="c-hide-sm">Taken</th><th class="c-hide-sm">Score</th><th class="c-hide-sm">Result</th><th class="c-hide-md">Scholarship code</th></tr></thead>
       <tbody id="resRows"></tbody>
     </table>
     <div class="pager"><span id="resRange"></span><div class="btns"><button class="btn" id="resPrev">Previous</button><button class="btn" id="resNext">Next</button></div></div>
@@ -559,7 +558,6 @@ const RESULT={paid:['Paid','r-paid','approved · success'],failed:['Failed','r-f
 const TIERC={50:'var(--t50)',30:'var(--t30)',15:'var(--t15)',0:'var(--t0)'};
 const tierPill=T=>T.voided?`<span class="tier void">Void · proctoring</span>`:T.tier?`<span class="tier"><i style="background:${TIERC[T.tier]}"></i>${T.tier}% off</span>`:`<span class="tier"><i style="background:${TIERC[0]}"></i>Below 31</span>`;
 const scoreBar=T=>`<div class="score"><b>${T.total}<small>/60</small></b><span class="sbar" aria-hidden="true"><span style="width:${T.total/60*100}%;background:${T.voided?'var(--faint)':TIERC[T.tier]}"></span><i style="left:${31/60*100}%"></i><i style="left:${41/60*100}%"></i><i style="left:${51/60*100}%"></i></span></div>`;
-const secs=T=>SECS.map(([c,,mx])=>`<b>${T.sec[c]}</b>/${mx}`).join(' · ');
 const CSTAT={active:'Active',enrolled:'Used · enrolled',expired:'Expired'};
 
 /* ---------- Tooltip + toast ---------- */
@@ -768,10 +766,9 @@ function renderRes(){
     <td><div class="who">${av(L)}<div><b>${esc(L.name)}</b><small>${L.prog} · ${L.level==='PG'?"Master's paper":"Bachelor's paper"}</small><span class="mob">${fmt(T.at)}<br>${scoreBar(T)}${tierPill(T)}</span></div></div></td>
     <td class="c-hide-sm"><span class="date">${fmt(T.at)}</span></td>
     <td class="c-hide-sm">${scoreBar(T)}</td>
-    <td class="c-hide-md"><span class="secs">${secs(T)}</span></td>
     <td class="c-hide-sm">${tierPill(T)}</td>
     <td class="c-hide-md">${T.code?`<span class="code">${T.code}</span><br><span class="cstat ${T.cstat}">${CSTAT[T.cstat]}${T.cstat==='active'?' · till '+fmtS(T.expires):''}</span>`:'<span class="cstat">—</span>'}</td>
-  </tr>`).join(''):`<tr><td colspan="7" class="empty">No test attempts match these filters.</td></tr>`;
+  </tr>`).join(''):`<tr><td colspan="6" class="empty">No test attempts match these filters.</td></tr>`;
   $('#resRange').textContent=list.length?`${rpage*PAGE+1}–${rpage*PAGE+slice.length} of ${list.length} attempts`:'';
   $('#resPrev').disabled=rpage===0;$('#resNext').disabled=rpage>=pages-1;
 }
@@ -781,8 +778,8 @@ $('#rq').oninput=()=>{rf.q=$('#rq').value;rpage=0;renderRes()};
 ['rpaper','rmonth','rcode'].forEach(id=>$('#'+id).onchange=()=>{rf[id.slice(1)]=$('#'+id).value;rpage=0;renderRes()});
 $('#resRows').onkeydown=e=>{const r=e.target.closest('[data-open]');if(r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openLearner(r.dataset.open)}};
 $('#resExport').onclick=()=>{
-  const list=resList(), rows=[['Registration id','Name','Email','Phone','Paper','Program','Taken','Score (/60)','LR (/20)','QA (/15)','VA (/15)','AR (/10)','Result','Scholarship code','Code status','Code expires']];
-  list.forEach(({L,T})=>rows.push([L.id,L.name,L.email,L.phone,L.level==='PG'?"Master's":"Bachelor's",L.prog,fmt(T.at),T.total,T.sec.LR,T.sec.QA,T.sec.VA,T.sec.AR,T.voided?'Void (proctoring)':T.tier?T.tier+'% off':'Below 31',T.code||'',T.cstat?CSTAT[T.cstat]:'',T.expires?fmtD(T.expires):'']));
+  const list=resList(), rows=[['Registration id','Name','Email','Phone','Paper','Program','Taken','Score (/60)','Result','Scholarship code','Code status','Code expires']];
+  list.forEach(({L,T})=>rows.push([L.id,L.name,L.email,L.phone,L.level==='PG'?"Master's":"Bachelor's",L.prog,fmt(T.at),T.total,T.voided?'Void (proctoring)':T.tier?T.tier+'% off':'Below 31',T.code||'',T.cstat?CSTAT[T.cstat]:'',T.expires?fmtD(T.expires):'']));
   downloadCSV('ydst-test-results',rows);toast(`Exported ${plural(list.length,'attempt')}`);
 };
 
@@ -820,7 +817,7 @@ function openLearner(id){
     <section class="sec" data-lane="test" aria-label="Test results">
       <div class="sec-h"><span class="lane-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Test</span><h3>Test results</h3>${L.bestTier!=null?`<span class="tier"><i style="background:${TIERC[L.bestTier]}"></i>${L.bestTier?L.bestTier+'% off':'No scholarship yet'}</span>`:''}</div>
       <div class="facts"><div><span>Best score</span><b>${best}</b></div><div><span>Attempts</span><b>${L.tests.length}</b></div><div><span>Next attempt</span><b>${nextAttempt(L)}</b></div></div>
-      ${L.tests.length?`<ul class="alist">${[...L.tests].reverse().map(T=>`<li><span>${monthLabel(T.month)}<br><span class="m">${fmt(T.at)}</span><br><span class="secs">${secs(T)}</span></span><span class="rt">${scoreBar(T)}<div style="margin-top:6px">${tierPill(T)}</div>${T.code?`<div style="margin-top:4px"><span class="code">${T.code}</span><br><span class="cstat ${T.cstat}">${CSTAT[T.cstat]}${T.cstat==='active'?' · till '+fmtD(T.expires):''}</span></div>`:''}</span></li>`).join('')}</ul>`
+      ${L.tests.length?`<ul class="alist">${[...L.tests].reverse().map(T=>`<li><span>${monthLabel(T.month)}<br><span class="m">${fmt(T.at)}</span></span><span class="rt">${scoreBar(T)}<div style="margin-top:6px">${tierPill(T)}</div>${T.code?`<div style="margin-top:4px"><span class="code">${T.code}</span><br><span class="cstat ${T.cstat}">${CSTAT[T.cstat]}${T.cstat==='active'?' · till '+fmtD(T.expires):''}</span></div>`:''}</span></li>`).join('')}</ul>`
         :`<p class="empty-p">${L.status==='paid'?'Fee paid. No test taken yet.':'Tests unlock once the ₹100 fee is paid.'}</p>`}
     </section>`;
   $('#scrim').hidden=false;$('#drawer').hidden=false;
